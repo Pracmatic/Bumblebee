@@ -21,6 +21,8 @@
  * along with Bumblebee. If not, see <http://www.gnu.org/licenses/>.
  */
 
+#define GMUX_TEST
+
 #define _GNU_SOURCE
 #include <unistd.h>
 #include <X11/Xlib.h>
@@ -99,10 +101,13 @@ void start_secondary(void) {
       set_bb_error("Could not enable discrete graphics card");
       return;
     }
+    bb_log(LOG_DEBUG, "Switched discrete card ons\n");
+#ifndef GMUX_TEST
     if (pci_config_restore(pci_bus_id_discrete, &pci_config_state_discrete)) {
       bb_log(LOG_WARNING, "Could not restore PCI configuration space: %s\n",
               strerror(errno));
     }
+#endif
   }
 
   //if runmode is BB_RUN_EXIT, do not start X, we are shutting down.
@@ -228,6 +233,7 @@ void stop_secondary() {
       if (switcher->status() != SWITCH_ON) {
         return;
       }
+#ifndef GMUX_TEST
       if (pci_config_save(pci_bus_id_discrete, &pci_config_state_discrete)) {
         bb_log(LOG_WARNING, "Could not save PCI configuration space: %s\n",
                 strerror(errno));
@@ -242,6 +248,7 @@ void stop_secondary() {
         bb_log(LOG_DEBUG, "Drivers are still loaded, unable to disable card\n");
         return;
       }
+#endif
     }
     if (switch_off() != SWITCH_OFF) {
       bb_log(LOG_WARNING, "Unable to disable discrete card.");
